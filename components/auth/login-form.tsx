@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useTransition, useState } from 'react'
 import CardWrapper from '@/components/auth/card-wrapper'
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
@@ -18,12 +18,19 @@ import { LoginSchema } from '@/schemas'
 import * as z from 'zod'
 import FormError from '@/components/form-error'
 import FormSuccess from '@/components/form-success'
+import { login } from '@/actions/login'
 
 
 
 
 
 const LoginForm = () => {
+
+    const [pending, setTransition] = useTransition()
+    const [success, setSuccess] = useState(false)
+    const [error, setError] = useState(false)
+    const [message, setMessage] = useState('')
+
 
     const form = useForm<z.infer<typeof LoginSchema>>({
         resolver: zodResolver(LoginSchema),
@@ -35,7 +42,21 @@ const LoginForm = () => {
 
 
     const onSubmit = (values: z.infer<typeof LoginSchema>) => {
-        console.log(values)
+        setTransition(() => {
+            login(values)
+                .then((data) => {
+                    console.log(data)
+                    if (data.success) {
+                        setError(false)
+                        setSuccess(true)
+                        setMessage(data.message)
+                    } else {
+                        setSuccess(false)
+                        setError(true)
+                        setMessage(data.message)
+                    }
+                })
+        })
     }
 
     return (
@@ -47,7 +68,7 @@ const LoginForm = () => {
         >
             <Form {...form}>
                 <form
-                    onSubmit={form.handleSubmit((data) => console.log(data))}
+                    onSubmit={form.handleSubmit((data) => onSubmit(data))}
                     className='space-y-4'
                 >
                     <div className='space-y-4'>
@@ -59,6 +80,7 @@ const LoginForm = () => {
                                     <FormLabel>Email</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={pending}
                                             type='email'
                                             placeholder='Enter your email'
                                             {...field}
@@ -76,6 +98,7 @@ const LoginForm = () => {
                                     <FormLabel>Password</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={pending}
                                             type='password'
                                             placeholder='Enter your password'
                                             {...field}
@@ -85,13 +108,14 @@ const LoginForm = () => {
                                 </FormItem>
                             )}
                         />
-                        <FormError message='Something went wrong!' />
-                        <FormSuccess message='Email Sent.' />
+                        {error && <FormError message={message} />}
+                        {success && <FormSuccess message={message} />}
 
                         <Button
                             className='w-full'
                             type='submit'
                             size='lg'
+                            disabled={pending}
                         >
                             Login
 
