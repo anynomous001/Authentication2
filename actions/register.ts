@@ -5,7 +5,10 @@ import { RegisterSchema } from '@/schemas'
 import { db } from '@/lib/db'
 import bcrypt from 'bcrypt'
 import { getUserByEmail } from '@/data/user'
+
+
 export const register = async (values: z.infer<typeof RegisterSchema>) => {
+
     const validatedFields = RegisterSchema.safeParse(values)
 
     if (!validatedFields.success) {
